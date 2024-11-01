@@ -1,17 +1,26 @@
-from django.shortcuts import render, get_object_or_404, HttpResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, View, FormView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from .forms import PostForm, Post, CommentForm, Comment
 from .models import UserProfile
-from django.contrib.auth import logout, login
+from django.contrib.auth import logout
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-class PostCreateView(CreateView):
+class BaseView(View):
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user_profile'] = get_object_or_404(UserProfile, user=self.request.user)
+        return context
+
+
+class PostCreateView(LoginRequiredMixin, BaseView, CreateView):
     model = Post
     form_class = PostForm
     template_name = 'create-post.html'
-    success_url = reverse_lazy('blog:all_list')
+    success_url = reverse_lazy('blog:all_post')
 
     def form_valid(self, form):
         post = form.save(commit=False)
@@ -19,37 +28,33 @@ class PostCreateView(CreateView):
         post.save()
         return super().form_valid(form)
 
-    def form_invalid(self, form):
-        return HttpResponse('Form is invalid')
 
-class PostListAll(ListView):
+class PostListAll(BaseView, ListView):
     model = Post
     template_name = 'all-posts.html'
     context_object_name = 'posts'
 
-    def post(self, request):
-        logout(request)
-        return reverse('users:login')
 
-class UserPostList(ListView):
-    model = UserProfile
+class FollowedListView(LoginRequiredMixin, BaseView, ListView):
+    model = Post
     template_name = 'index.html'
     context_object_name = 'posts'
 
     def get_queryset(self):
-        posts = UserProfile.objects.get(user__username=self.kwargs['username'])
-        return posts.posts.all()
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        following = user_profile.following.all()
+        return Post.objects.filter(user__in=following).select_related('user').order_by('-create_at')
 
-class UserDetailView(DetailView):
+
+class UserDetailView(LoginRequiredMixin, BaseView, DetailView):
     model = UserProfile
-    template_name = 'my-profile'
+    template_name = 'my-profile.html'
     context_object_name = 'user'
 
-    def get_queryset(self):
-        user = UserProfile.objects.get(user__username=self.kwargs['username'])
-        return user
+    def get_object(self, queryset=None):
+        return get_object_or_404(UserProfile, user=self.request.user)
 
-class PostDetailView(DetailView):
+class PostDetailView(BaseView, DetailView):
     model = Post
     template_name = 'show-post.html'
     context_object_name = 'post'
@@ -72,7 +77,7 @@ class PostDetailView(DetailView):
                                  )
 
 
-    def post(self, request):
+    def post2(self, request):
         form = CommentForm(self.request.POST)
 
         if form.is_valid():
@@ -82,4 +87,7 @@ class PostDetailView(DetailView):
             comment.save()
             return reverse('blog:post_detail', self.kwargs['year'], self.kwargs['month'], self.kwargs['day'], self.kwargs['slug'])
 
-
+class LogoutView(View):
+    def get(self, request, *args, **kwargs):
+        logout(request)
+        return redirect('users:login')
