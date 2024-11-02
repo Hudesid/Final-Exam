@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.urls import reverse
+from django.utils.text import slugify
 
 
 class UserProfile(models.Model):
@@ -27,7 +28,7 @@ class Post(models.Model):
     image = models.ImageField(upload_to='post_images/')
     create_at = models.DateTimeField(auto_now_add=True)
     description = models.TextField()
-    slug = models.SlugField(unique=True, max_length=255, unique_for_date='create_at')
+    slug = models.SlugField(unique=True, max_length=255, unique_for_date='create_at', blank=True)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='posts')
 
     def get_absolute_url(self):
@@ -37,6 +38,11 @@ class Post(models.Model):
             self.create_at.day,
             self.slug
             ])
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
