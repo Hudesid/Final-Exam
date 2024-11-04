@@ -6,7 +6,9 @@ admin.site.register(UserProfile)
 
 @admin.register(Post)
 class Post(admin.ModelAdmin):
-    list_display = ('title', 'create_at')
+    list_display = ('title', 'created_at')
     prepopulated_fields = {
         'slug': ('title',)
     }
+
+

@@ -10,11 +10,27 @@
             {% for post in posts %}
                 <div class="bg-white p-6 rounded-lg shadow-md">
                     <img src="{{ post.image.url }}" alt="Post Image" class="w-full h-48 object-cover rounded-lg mb-4">
-                    <h2 class="text-xl font-bold mb-2">{{ post.title }}</h2>
+                    <ul class="list-inline post-meta">
+                        <li class="list-inline-item"><h2 class="text-xl font-bold mb-2">{{ post.title }}</h2>
+                        <li class="list-inline-item text-muted" style="font-size: 12px;">
+                            <p>
+                                {% if post.created_at < post.updated_at %}
+                                     Updated_at: {{ post.updated_at }}
+                                {% else %}
+                                    date: {{ post.created_at }}
+                                {% endif %}
+                            </p>
+                    </ul>
                     <p class="text-gray-700 mb-4">{{ post.description }}</p>
-                    <p class="text-gray-700 mb-4">By <a href="./user-profile.html"
-                            class="text-indigo-600 hover:text-indigo-800">{{ post.user.user.username }}</a>
-                    </p>
+                    {% if request.user != post.user.user %}
+                        <p class="text-gray-700 mb-4">By <a href="{% url 'blog:user_profile' username=post.user.user.username %}"
+                                class="text-indigo-600 hover:text-indigo-800">{{ post.user.user.username }}</a>
+                        </p>
+                    {% else %}
+                        <p class="text-gray-700 mb-4">By <a href="{% url 'blog:my_profile' username=post.user.user.username %}"
+                                class="text-indigo-600 hover:text-indigo-800">{{ post.user.user.username }}</a>
+                        </p>
+                    {% endif %}
                     <a href="{{ post.get_absolute_url }}" class="text-indigo-600 hover:text-indigo-800">Read More</a>
                 </div>
             {% endfor %}

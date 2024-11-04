@@ -19,6 +19,9 @@ class UserProfile(models.Model):
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL,  on_delete=models.CASCADE)
 
+    def is_following(self, user):
+        return self.following.filter(id=user.id).exists()
+
     def __str__(self):
         return self.user.username
 
@@ -26,18 +29,35 @@ class UserProfile(models.Model):
 class Post(models.Model):
     title = models.CharField(max_length=255)
     image = models.ImageField(upload_to='post_images/')
-    create_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     description = models.TextField()
-    slug = models.SlugField(unique=True, max_length=255, unique_for_date='create_at', blank=True)
+    slug = models.SlugField(unique=True, unique_for_date='created_at', blank=True)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='posts')
 
     def get_absolute_url(self):
         return reverse('blog:post_detail', args=[
-            self.create_at.year,
-            self.create_at.month,
-            self.create_at.day,
+            self.created_at.year,
+            self.created_at.month,
+            self.created_at.day,
             self.slug
             ])
+
+    def get_absolute_url_update(self):
+        return reverse('blog:post_update', args=[
+            self.created_at.year,
+            self.created_at.month,
+            self.created_at.day,
+            self.slug
+        ])
+
+    def get_absolute_url_delete(self):
+        return reverse('blog:post_delete', args=[
+            self.created_at.year,
+            self.created_at.month,
+            self.created_at.day,
+            self.slug
+        ])
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -50,7 +70,7 @@ class Post(models.Model):
 class Comment(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField()
-    created_date = models.DateTimeField(auto_now_add=True)
-    update = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     comment = models.TextField()
     post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)

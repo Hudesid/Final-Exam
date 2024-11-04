@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, View, FormView
@@ -24,7 +25,7 @@ class PostCreateView(LoginRequiredMixin, BaseView, CreateView):
 
     def form_valid(self, form):
         post = form.save(commit=False)
-        post.user = self.request.user
+        post.user = get_object_or_404(UserProfile, user=self.request.user)
         post.save()
         return super().form_valid(form)
 
@@ -45,16 +46,40 @@ class FollowedListView(LoginRequiredMixin, BaseView, ListView):
     def get_queryset(self):
         user_profile = get_object_or_404(UserProfile, user=self.request.user)
         following = user_profile.following.all()
-        return Post.objects.filter(user__in=following).select_related('user').order_by('-create_at')
+        return Post.objects.filter(user__in=following).select_related('user').order_by('-created_at')
 
 
-class UserDetailView(LoginRequiredMixin, BaseView, DetailView):
+class MyProfileDetailView(LoginRequiredMixin, BaseView, DetailView):
     model = UserProfile
     template_name = 'my-profile.html'
     context_object_name = 'user'
 
     def get_object(self, queryset=None):
         return get_object_or_404(UserProfile, user=self.request.user)
+
+class UserDetailView(LoginRequiredMixin, BaseView, DetailView):
+    model = UserProfile
+    template_name = 'user-profile.html'
+    context_object_name = 'user'
+
+    def get_object(self, queryset=None):
+        username = self.kwargs['username']
+        return get_object_or_404(UserProfile, user__username=username)
+
+    def post(self, *args, **kwargs):
+        action = self.request.POST.get('action')
+        if action == 'follow':
+            self.request.user.userprofile.following.add(self.get_object())
+
+        elif action == 'unfollow':
+            self.request.user.userprofile.following.remove(self.get_object())
+
+        return redirect('blog:user_profile', username=self.get_object())
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['follow'] = self.request.user.userprofile.is_following(self.get_object())
+        return context
 
 class PostDetailView(BaseView, DetailView):
     model = Post
@@ -72,14 +97,14 @@ class PostDetailView(BaseView, DetailView):
         day = self.kwargs.get('day')
         slug = self.kwargs.get('slug')
         return get_object_or_404(Post,
-                                 create_at__year=year,
-                                 create_at__month=month,
-                                 create_at__day=day,
+                                 created_at__year=year,
+                                 created_at__month=month,
+                                 created_at__day=day,
                                  slug=slug
                                  )
 
 
-    def post2(self, request):
+    def post(self, request):
         form = CommentForm(self.request.POST)
 
         if form.is_valid():
@@ -89,7 +114,68 @@ class PostDetailView(BaseView, DetailView):
             comment.save()
             return reverse('blog:post_detail', self.kwargs['year'], self.kwargs['month'], self.kwargs['day'], self.kwargs['slug'])
 
-class LogoutView(View):
+class LogoutView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         logout(request)
         return redirect('users:login')
+
+class UpdatePostView(LoginRequiredMixin, BaseView, UpdateView):
+    model = Post
+    template_name = 'edit-post.html'
+    form_class = PostForm
+    success_url = reverse_lazy('blog:index')
+
+    def get_object(self, queryset=None):
+        year = self.kwargs.get('year')
+        month = self.kwargs.get('month')
+        day = self.kwargs.get('day')
+        slug = self.kwargs.get('slug')
+        return get_object_or_404(Post,
+                                 created_at__year=year,
+                                 created_at__month=month,
+                                 created_at__day=day,
+                                 slug=slug
+                                 )
+
+    def form_invalid(self, form):
+        return super().form_invalid(form)
+
+class PostDeleteView(LoginRequiredMixin, BaseView, DeleteView):
+    model = Post
+    success_url = reverse_lazy('blog:index')
+
+    def get_object(self, queryset=None):
+        year = self.kwargs.get('year')
+        month = self.kwargs.get('month')
+        day = self.kwargs.get('day')
+        slug = self.kwargs.get('slug')
+        return get_object_or_404(Post,
+                                 created_at__year=year,
+                                 created_at__month=month,
+                                 created_at__day=day,
+                                 slug=slug
+                                 )
+
+
+class UpdateUserProfileView(LoginRequiredMixin, BaseView, UpdateView):
+    model = UserProfile
+    template_name = 'edit-profile.html'
+    form_class = PostForm
+    success_url = reverse_lazy('blog:my_profile')
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(UserProfile, user=self.request.user)
+
+
+    def form_valid(self, form):
+        user = form.save()
+        profile_image = form.cleaned_data.get('profile_image')
+        user_profile = UserProfile.objects.create(user=user, profile_image=profile_image)
+        if profile_image:
+            user_profile.profile_image = profile_image
+            user_profile.save()
+
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        return super().form_invalid(form)
