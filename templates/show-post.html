@@ -33,8 +33,9 @@
                 </div>
             {% endif %}
 
+            <h3 class="text-xl font-bold mb-2">Add a Comment</h3>
             <form method="post">
-                <h3 class="text-xl font-bold mb-2">Add a Comment</h3>
+                {% csrf_token %}
                 <textarea id="comment" name="comment" rows="3" required
                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Write your comment here..."></textarea>
@@ -52,15 +53,18 @@
                     <div class="bg-gray-50 p-4 rounded-lg flex justify-between">
                         <div>
                             <p class="font-semibold">
-                                {{ comment.name }}
-                                <span class="text-muted"> | {{ comment.email }}</span>
-                                <span class="text-muted"> | {{ comment.create_date }}</span>
+                                <i class="fas fa-user mr-2"></i>{{ comment.name }}
+                                <span class="text-muted" style="font-size: 13px;"> | {{ comment.email }}</span>
+                                <span class="text-muted" style="font-size: 13px;"> | {{ comment.created_at }}</span>
                             </p>
-                            <p class="text-gray-700">{{ comment.description }}</p>
+                            <p class="text-gray-700">{{ comment.comment }}</p>
                         </div>
-                        {% if request.user == post.user %}
+                        {% if request.user.username == comment.name %}
                             <div class="flex space-x-2">
-                                <a href="#" class="text-red-500 hover:text-red-700">Delete</a>
+                                <form method="post" action="{{ comment.get_absolute_url_delete }}">
+                                    {% csrf_token %}
+                                    <button  class="text-red-500 hover:text-red-700">Delete</button>
+                                </form>
                             </div>
                         {% endif %}
                     </div>
