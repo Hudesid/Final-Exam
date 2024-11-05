@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
-from django.urls import reverse
+from django.shortcuts import redirect
+from django.urls import reverse, reverse_lazy
 from django.utils.text import slugify
 
 
@@ -35,6 +36,9 @@ class Post(models.Model):
     slug = models.SlugField(unique=True, unique_for_date='created_at', blank=True)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='posts')
 
+    def check_is_updated(self):
+        return self.updated_at > self.created_at
+
     def get_absolute_url(self):
         return reverse('blog:post_detail', args=[
             self.created_at.year,
@@ -43,13 +47,21 @@ class Post(models.Model):
             self.slug
             ])
 
-    def get_absolute_url_update(self):
-        return reverse('blog:post_update', args=[
+    def get_absolute_url_2(self):
+        return redirect(reverse('blog:post_detail', args=[
             self.created_at.year,
             self.created_at.month,
             self.created_at.day,
             self.slug
-        ])
+            ]))
+
+    def get_absolute_url_update(self):
+        return redirect(reverse('blog:post_update', args=[
+            self.created_at.year,
+            self.created_at.month,
+            self.created_at.day,
+            self.slug
+        ]))
 
     def get_absolute_url_delete(self):
         return reverse('blog:post_delete', args=[

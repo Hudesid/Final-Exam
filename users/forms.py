@@ -11,6 +11,11 @@ class RegisterForm(UserCreationForm):
         super(UserCreationForm, self).__init__(*args, **kwargs)
         self.fields['username'].help_text = None
 
+    password1 = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={'class':'form-control'})
+    )
+
     profile_image = forms.ImageField(
         label='Avatar',
         required=False,
