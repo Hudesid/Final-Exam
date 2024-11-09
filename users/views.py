@@ -1,10 +1,12 @@
 from django.contrib.auth import authenticate, login
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import send_mail
-from django.urls import reverse_lazy
+from django.shortcuts import redirect
+from django.urls import reverse_lazy, reverse
 from django.views.generic.edit import CreateView
-from django.views.generic import FormView
+from django.views.generic import FormView, View
 from .forms import RegisterForm, LoginForm, User
-from blog.models import UserProfile
+from blog.models import UserProfile, UserToken
 from django.conf import settings
 
 class Signup(CreateView):
@@ -20,10 +22,15 @@ class Signup(CreateView):
         email = form.cleaned_data['email']
         profile_image = form.cleaned_data.get('profile_image')
         user_profile = UserProfile.objects.create(user=user, profile_image=profile_image)
+        user_token = UserToken.create(user_profile=user)
+        token = user_token.token
+        verification_link = reverse('users:verify_email', args=[user_profile.user.id, token])
+        current_site = get_current_site(self.request)
+        full_link = f"http://{current_site.domain}{verification_link}"
         if profile_image:
             user_profile.profile_image = profile_image
-            user_profile.save()
-        message = "Sizning emailgizdan Blog Site dan ro'yxatdan o'tildi "
+        user_profile.save()
+        message = f"Sizning emailgizdan Blog Site dan ro'yxatdan o'tildi\\Ushbu link orqali saytga o'tsangiz bo'ladi {full_link}"
         send_mail(
             'Blog Site dan habar',
             message,
@@ -31,9 +38,9 @@ class Signup(CreateView):
             [email],
             fail_silently=False
         )
-        user_authenticate = authenticate(self.request, username=username, password=password)
-        if user_authenticate is not None:
-            login(self.request, user_authenticate)
+        # user_authenticate = authenticate(self.request, username=username, password=password)
+        # if user_authenticate is not None:
+        #     login(self.request, user_authenticate)
 
         return super().form_valid(form)
 
@@ -57,3 +64,11 @@ class Login(FormView):
 
     def form_invalid(self, form):
         return super().form_invalid(form)
+
+class VerifyEmail(View):
+    def get(self, request, id, token, *args, **kwargs):
+        user_profile = UserProfile.objects.get(pk=id)
+        user_token = UserToken.objects.get(user_profile=user_profile, token=token)
+        user_profile.is_verified_email = True
+        user_profile.save()
+        return redirect('app_name:login')

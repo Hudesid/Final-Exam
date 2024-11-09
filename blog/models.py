@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.conf import settings
 from django.shortcuts import redirect
@@ -17,7 +19,7 @@ class UserProfile(models.Model):
         default='profile_images/default.jpg',
         blank=True
     )
-
+    is_verified_email = models.BooleanField(default=False)
     user = models.OneToOneField(settings.AUTH_USER_MODEL,  on_delete=models.CASCADE)
 
     def is_following(self, user):
@@ -98,3 +100,12 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.user.username}: {self.message}"
+
+class UserToken(models.Model):
+    token = models.CharField(max_length=500, unique=True, blank=True)
+    user_profile = models.OneToOneField(UserProfile, on_delete=models.CASCADE, related_name='token')
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            self.token = str(uuid.uuid4())
+        super().save(*args, **kwargs)

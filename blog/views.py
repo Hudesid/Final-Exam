@@ -1,4 +1,3 @@
-from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, View
@@ -215,9 +214,7 @@ class UpdateUserProfileView(LoginRequiredMixin, BaseView, UpdateView):
     def get_object(self, queryset=None):
         username = self.kwargs.get('username')
         user = get_object_or_404(User, username=username)
-        if user != self.request.user:
-            raise HttpResponseForbidden("You don't have permission to edit this profile.")
-        return get_object_or_404(UserProfile, user=user)
+        return user
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
