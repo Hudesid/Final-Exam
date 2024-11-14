@@ -13,7 +13,7 @@ class RegisterForm(UserCreationForm):
 
     password1 = forms.CharField(
         required=False,
-        widget=forms.PasswordInput(attrs={'class':'form-control'})
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
     )
 
     profile_image = forms.ImageField(
@@ -32,6 +32,18 @@ class RegisterForm(UserCreationForm):
             'password2': forms.PasswordInput(attrs={'class': 'form-control'}),
         }
 
+    def save(self, commit=True):
+        username = self.cleaned_data.get('username')
+        email = self.cleaned_data.get('email')
+
+        try:
+            existing_user = User.objects.get(username=username, email=email)
+            return existing_user
+        except User.DoesNotExist:
+            user = super().save(commit=False)
+            if commit:
+                user.save()
+            return user
 
 
 class LoginForm(forms.Form):

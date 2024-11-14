@@ -21,15 +21,15 @@
                     </ul>
                     <p class="text-gray-700 mb-4">{{ post.description }}</p>
                     {% if request.user != post.user.user %}
-                        <p class="text-gray-700 mb-4">By <a href="{% url 'blog:user_profile' usernamec=post.user.user.username %}"
+                        <p class="text-gray-700 mb-4">By <a href="{% url 'users:user_profile' username=post.user.user.username %}"
                                 class="text-indigo-600 hover:text-indigo-800">{{ post.user.user.username }}</a>
                         </p>
                     {% else %}
-                        <p class="text-gray-700 mb-4">By <a href="{% url 'blog:my_profile' username=post.user.user.username %}"
+                        <p class="text-gray-700 mb-4">By <a href="{% url 'users:my_profile' username=post.user.user.username %}"
                                 class="text-indigo-600 hover:text-indigo-800">{{ post.user.user.username }}</a>
                         </p>
                     {% endif %}
-                    <a href="{{ post.get_absolute_url }}" class="text-indigo-600 hover:text-indigo-800">Read More</a>
+                    <a href="{{ post.get_absolute_url('post_detail') }}" class="text-indigo-600 hover:text-indigo-800">Read More</a>
                 </div>
             {% endfor %}
         </div>

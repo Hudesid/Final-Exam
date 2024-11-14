@@ -103,10 +103,10 @@
                             <!-- Profile Dropdown -->
                             <div class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5"
                                 id="profile-dropdown" role="menu" aria-orientation="vertical" aria-labelledby="user-menu">
-                                <a href="{% url 'blog:my_profile' username=user_profile.user.username %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                <a href="{% url 'users:my_profile' username=user_profile.user.username %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                     role="menuitem">Your
                                     Profile</a>
-                                <a href="{% url 'blog:logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                                <a href="{% url 'users:logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
                             </div>
                         </div>
                             {% if not request.user.is_authenticated %}
@@ -176,12 +176,12 @@
                             <span class="text-base font-medium">Profile</span>
                         </button>
                         <div class="hidden mt-2 space-y-1 bg-white rounded-md shadow-lg" id="mobile-profile-dropdown">
-                            <a href="{% url 'blog:my_profile' username=user_profile.user.username %}"
+                            <a href="{% url 'users:my_profile' username=user_profile.user.username %}"
                                 class="block px-4 py-2 text-base text-gray-700 hover:bg-gray-100">Your Profile</a>
                             <a href="./settings.html"
                                 class="block px-4 py-2 text-base text-gray-700 hover:bg-gray-100">Settings</a>
                             {% if request.user.is_authenticated %}
-                                <form method="POST" action="{% url 'blog:logout' %}">
+                                <form method="POST" action="{% url 'users:logout' %}">
                                     <button type="submit"
                                         class="block w-full text-left px-4 py-2 text-base text-gray-700 hover:bg-gray-100">Log
                                         out</button>

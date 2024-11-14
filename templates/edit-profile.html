@@ -43,7 +43,7 @@
                     class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Update
                     Profile</button>
             </form>
-            <a href="{% url 'blog:my_profile' username=request.user.username %}" class="text-indigo-600 hover:text-indigo-800 block mt-4 text-center">Back to
+            <a href="{% url 'users:my_profile' username=request.user.username %}" class="text-indigo-600 hover:text-indigo-800 block mt-4 text-center">Back to
                 Profile</a>
         </div>
     </main>
